@@ -21,6 +21,14 @@ const STATUS = [
   { id: 'arquivada', label: 'Arquivada', cor: '#5f5e5a', bg: '#f1efe8' },
 ]
 
+const DEPARTAMENTOS_GESTAO = [
+  'Coordenadora',
+  'Diretora',
+  'RH',
+  'Secretaria',
+  'Outro departamento',
+]
+
 const ENCAMINHAMENTOS = [
   'Comunicado à família',
   'Encaminhado à coordenação',
@@ -76,6 +84,15 @@ function FormOcorrencia({ inicial, onSave, onCancel, educadoras, criancas }) {
     // Encaminhamento
     encaminhamentos: [],
     observacoes_encaminhamento: '',
+    // Alinhamento com a família
+    alinhamento_pais: false,
+    alinhamento_pais_data: '',
+    alinhamento_pais_quem: '',
+    alinhamento_pais_resumo: '',
+    // Alinhamento com a gestão
+    alinhamento_gestao: [],
+    alinhamento_gestao_data: '',
+    alinhamento_gestao_resumo: '',
     // Status e resolução
     status: 'aberta',
     resolucao: '',
@@ -90,7 +107,10 @@ function FormOcorrencia({ inicial, onSave, onCancel, educadoras, criancas }) {
   }
 
   const cat = CATEGORIAS.find(c => c.id === form.categoria)
-  const canSave = form.titulo.trim().length > 0 && form.descricao.trim().length > 0
+  const alinhFamPendente = form.alinhamento_pais && !form.alinhamento_pais_data
+  const alinhGestPendente = form.alinhamento_gestao.length > 0 && !form.alinhamento_gestao_data
+  const bloqueiaResolver = (form.status === 'resolvida') && (alinhFamPendente || alinhGestPendente)
+  const canSave = form.titulo.trim().length > 0 && form.descricao.trim().length > 0 && !bloqueiaResolver
 
   return (
     <div style={{ background: '#fff', border: '1px solid var(--warm3)', borderRadius: 'var(--r)', padding: 24 }}>
@@ -224,6 +244,69 @@ function FormOcorrencia({ inicial, onSave, onCancel, educadoras, criancas }) {
           placeholder="Observações adicionais sobre os encaminhamentos..." />
       </div>
 
+      {/* ─── ALINHAMENTOS ─── */}
+      <div style={{ background: 'var(--warm)', borderRadius: 'var(--r)', padding: 16, marginBottom: 20 }}>
+        <div style={{ fontFamily: 'Fraunces, serif', fontSize: 15, color: 'var(--ink)', marginBottom: 14 }}>🤝 Alinhamentos necessários</div>
+
+        {/* Família */}
+        <div style={{ marginBottom: 14, paddingBottom: 14, borderBottom: '1px dashed var(--warm3)' }}>
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13, fontWeight: 500, color: 'var(--ink2)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={form.alinhamento_pais} onChange={e => setForm(p => ({ ...p, alinhamento_pais: e.target.checked }))} />
+            Necessita alinhamento com a família
+          </label>
+          {form.alinhamento_pais && (
+            <div style={{ marginTop: 10, paddingLeft: 22 }}>
+              <div className="grid-2" style={{ gap: 10, marginBottom: 10 }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Data da reunião / contato</label>
+                  <input type="date" className="form-input" value={form.alinhamento_pais_data} onChange={e => setForm(p => ({ ...p, alinhamento_pais_data: e.target.value }))} />
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Quem participou</label>
+                  <input className="form-input" value={form.alinhamento_pais_quem} onChange={e => setForm(p => ({ ...p, alinhamento_pais_quem: e.target.value }))} placeholder="Ex: Maria Santos (mãe do João), Coordenadora Ana" />
+                </div>
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Resumo do que foi discutido e decidido</label>
+                <textarea className="form-input" style={{ minHeight: 70 }} value={form.alinhamento_pais_resumo} onChange={e => setForm(p => ({ ...p, alinhamento_pais_resumo: e.target.value }))} placeholder="Pontos abordados, decisões, próximos passos..." />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Gestão */}
+        <div>
+          <label className="form-label">Alinhamento com a gestão</label>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+            {DEPARTAMENTOS_GESTAO.map(dep => {
+              const sel = form.alinhamento_gestao.includes(dep)
+              return (
+                <button key={dep} type="button" onClick={() => toggleArr('alinhamento_gestao', dep)}
+                  style={{ padding: '5px 12px', borderRadius: 16, fontSize: 11, cursor: 'pointer', border: `1.5px solid ${sel ? '#6b4e71' : 'var(--warm3)'}`, background: sel ? '#ede5f0' : '#fff', color: sel ? '#3d2a42' : 'var(--ink3)', fontWeight: sel ? 600 : 400 }}>
+                  {sel ? '✓ ' : ''}{dep}
+                </button>
+              )
+            })}
+          </div>
+          {form.alinhamento_gestao.length > 0 && (
+            <div className="grid-2" style={{ gap: 10 }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Data do alinhamento</label>
+                <input type="date" className="form-input" value={form.alinhamento_gestao_data} onChange={e => setForm(p => ({ ...p, alinhamento_gestao_data: e.target.value }))} />
+              </div>
+              <div className="form-group" style={{ margin: 0, gridColumn: '1/-1' }}>
+                <label className="form-label">Resumo do alinhamento</label>
+                <textarea className="form-input" style={{ minHeight: 60 }} value={form.alinhamento_gestao_resumo} onChange={e => setForm(p => ({ ...p, alinhamento_gestao_resumo: e.target.value }))} placeholder="Decisões, orientações recebidas, encaminhamentos..." />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div style={{ marginTop: 12, padding: '8px 12px', background: '#faeeda', borderRadius: 8, fontSize: 11, color: '#633806' }}>
+          ⚠️ Ocorrências só podem ser marcadas como <strong>resolvidas</strong> depois que os alinhamentos marcados forem concluídos (data preenchida).
+        </div>
+      </div>
+
       {/* Status */}
       <div style={{ marginBottom: 20 }}>
         <label className="form-label">Status</label>
@@ -253,7 +336,11 @@ function FormOcorrencia({ inicial, onSave, onCancel, educadoras, criancas }) {
           💾 Salvar ocorrência
         </button>
         <button className="btn btn-ghost" onClick={onCancel}>Cancelar</button>
-        {!canSave && <span style={{ fontSize: 12, color: 'var(--ink3)', display: 'flex', alignItems: 'center' }}>Preencha título e descrição para salvar</span>}
+        {!canSave && (
+          <span style={{ fontSize: 12, color: 'var(--ink3)', display: 'flex', alignItems: 'center' }}>
+            {bloqueiaResolver ? 'Preencha as datas dos alinhamentos antes de marcar como resolvida' : 'Preencha título e descrição para salvar'}
+          </span>
+        )}
       </div>
     </div>
   )
@@ -345,6 +432,34 @@ function OcorrenciaCard({ oc, onEdit, onUpdateStatus, criancas, educadoras }) {
                   ))}
                 </div>
                 {oc.observacoes_encaminhamento && <div style={{ fontSize: 12, color: 'var(--ink3)', fontStyle: 'italic', marginBottom: 14 }}>{oc.observacoes_encaminhamento}</div>}
+              </>
+            )}
+
+            {/* Alinhamentos */}
+            {(oc.alinhamento_pais || oc.alinhamento_gestao?.length > 0) && (
+              <>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Alinhamentos</div>
+                <div style={{ marginBottom: 14 }}>
+                  {oc.alinhamento_pais && (
+                    <div style={{ background: '#e6f1fb', border: '1px solid #b5d4f4', borderRadius: 8, padding: '10px 12px', marginBottom: 8 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#0c447c', marginBottom: 4 }}>
+                        👨‍👩‍👧 Família {oc.alinhamento_pais_data ? `· ${oc.alinhamento_pais_data.split('-').reverse().join('/')}` : '· pendente'}
+                      </div>
+                      {oc.alinhamento_pais_quem && <div style={{ fontSize: 12, color: 'var(--ink2)' }}>Participantes: {oc.alinhamento_pais_quem}</div>}
+                      {oc.alinhamento_pais_resumo && <div style={{ fontSize: 12, color: 'var(--ink2)', marginTop: 4, lineHeight: 1.5 }}>{oc.alinhamento_pais_resumo}</div>}
+                      {!oc.alinhamento_pais_data && <div style={{ fontSize: 11, color: '#791f1f', marginTop: 4 }}>⚠️ Alinhamento pendente</div>}
+                    </div>
+                  )}
+                  {oc.alinhamento_gestao?.length > 0 && (
+                    <div style={{ background: '#ede5f0', border: '1px solid #d5c2da', borderRadius: 8, padding: '10px 12px' }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#3d2a42', marginBottom: 4 }}>
+                        🏛️ Gestão: {oc.alinhamento_gestao.join(', ')} {oc.alinhamento_gestao_data ? `· ${oc.alinhamento_gestao_data.split('-').reverse().join('/')}` : '· pendente'}
+                      </div>
+                      {oc.alinhamento_gestao_resumo && <div style={{ fontSize: 12, color: 'var(--ink2)', marginTop: 4, lineHeight: 1.5 }}>{oc.alinhamento_gestao_resumo}</div>}
+                      {!oc.alinhamento_gestao_data && <div style={{ fontSize: 11, color: '#791f1f', marginTop: 4 }}>⚠️ Alinhamento pendente</div>}
+                    </div>
+                  )}
+                </div>
               </>
             )}
 

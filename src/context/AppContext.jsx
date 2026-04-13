@@ -24,6 +24,25 @@ const INITIAL_EDUCADORAS = [
 function lsGet(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback } catch { return fallback }
 }
+function lsSet(key, v) { try { localStorage.setItem(key, JSON.stringify(v)) } catch {} }
+
+const ROTINA_ITEMS_DEFAULT = [
+  { id: 'horta',       icon: '🌱', label: 'Horta',                   dias: [1,2,3,4,5] },
+  { id: 'animais',     icon: '🐦', label: 'Animais',                 dias: [1,2,3,4,5] },
+  { id: 'higiene',     icon: '🚿', label: 'Higiene',                 dias: [1,2,3,4,5] },
+  { id: 'cafe',        icon: '☕', label: 'Café da manhã',           dias: [1,2,3,4,5] },
+  { id: 'almoco',      icon: '🍽️', label: 'Almoço',                  dias: [1,2,3,4,5] },
+  { id: 'tarefa',      icon: '📚', label: 'Tarefa de casa',          dias: [1,2,3,4,5] },
+  { id: 'organizacao', icon: '🧹', label: 'Organização dos materiais', dias: [1,2,3,4,5] },
+  { id: 'agendas',     icon: '📋', label: 'Agendas e kits',          dias: [1,2,3,4,5] },
+  { id: 'escovacao',   icon: '🦷', label: 'Escovação',               dias: [1,2,3,4,5] },
+  { id: 'banho',       icon: '🛁', label: 'Banho',                   dias: [1,2,3,4,5] },
+]
+
+function todayKey() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 export function AppProvider({ children }) {
   const db = useDB()
@@ -35,9 +54,8 @@ export function AppProvider({ children }) {
   const diarioHook = useDiario()
   const jornaisHook = useJornais()
 
-  const [rotinaState, setRotinaState] = useState(
-    () => lsGet('integral_rotina_' + new Date().toDateString(), new Array(10).fill(false))
-  )
+  const [rotinaItems, setRotinaItems] = useState(() => lsGet('integral_rotina_items', ROTINA_ITEMS_DEFAULT))
+  const [rotinaCheck, setRotinaCheck] = useState(() => lsGet('integral_rotina_check_' + todayKey(), {}))
   const [toast, setToast] = useState(null)
 
   useEffect(() => {
@@ -52,20 +70,23 @@ export function AppProvider({ children }) {
     }
   }, [db.loading, db.connected, atividadesHook.data.length])
 
-  useEffect(() => {
-    localStorage.setItem('integral_rotina_' + new Date().toDateString(), JSON.stringify(rotinaState))
-  }, [rotinaState])
+  useEffect(() => { lsSet('integral_rotina_check_' + todayKey(), rotinaCheck) }, [rotinaCheck])
+  useEffect(() => { lsSet('integral_rotina_items', rotinaItems) }, [rotinaItems])
 
   function showToast(msg, icon = '✅') {
     setToast({ msg, icon })
     setTimeout(() => setToast(null), 3500)
   }
 
-  function toggleRotina(idx) {
-    setRotinaState(prev => { const n = [...prev]; n[idx] = !n[idx]; return n })
+  function toggleRotina(itemId) {
+    setRotinaCheck(prev => ({ ...prev, [itemId]: !prev[itemId] }))
   }
+  function updateRotinaItems(items) { setRotinaItems(items) }
 
-  const rotinaCount = rotinaState.filter(Boolean).length
+  const hoje = new Date().getDay()
+  const rotinaItemsHoje = rotinaItems.filter(it => !it.dias || it.dias.length === 0 || it.dias.includes(hoje))
+  const rotinaCount = rotinaItemsHoje.filter(it => rotinaCheck[it.id]).length
+  const rotinaTotal = rotinaItemsHoje.length
   const educadoras = educadorasHook.data.length > 0 ? educadorasHook.data : INITIAL_EDUCADORAS
 
   return (
@@ -78,7 +99,7 @@ export function AppProvider({ children }) {
       registros: registrosHook.data,
       diario: diarioHook.data,
       jornais: jornaisHook.data,
-      rotinaState, rotinaCount, toast,
+      rotinaItems, rotinaItemsHoje, rotinaCheck, rotinaCount, rotinaTotal, updateRotinaItems, toast,
       addEducadora: educadorasHook.add,
       updateEducadora: educadorasHook.update,
       removeEducadora: educadorasHook.remove,

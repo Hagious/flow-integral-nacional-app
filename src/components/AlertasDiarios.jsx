@@ -14,9 +14,43 @@ export default function AlertasDiarios({ setPage }) {
   const chamadaHoje = chamada[hoje] || {}
   const ocorrencias = lsGet('integral_ocorrencias', [])
   const planejamentos = lsGet('integral_planejamentos', [])
+  const feriados = lsGet('integral_feriados', [])
+  const eventos = lsGet('integral_eventos', [])
 
   const alertas = useMemo(() => {
     const lista = []
+
+    // Feriado hoje
+    const feriadoHoje = feriados.find(f => f.data === hoje)
+    if (feriadoHoje) {
+      lista.push({
+        id: 'feriado',
+        tipo: 'info',
+        icon: '🎉',
+        titulo: `Hoje é feriado — ${feriadoHoje.nome}`,
+        descricao: `Feriado ${feriadoHoje.tipo || 'registrado'}${feriadoHoje.descricao ? ` · ${feriadoHoje.descricao}` : ''}`,
+        acao: 'calendario',
+        acaoLabel: 'Ver calendário',
+      })
+    }
+
+    // Eventos hoje ou em andamento
+    const eventosHoje = eventos.filter(ev => {
+      const ini = ev.data_inicio
+      const fim = ev.data_fim || ev.data_inicio
+      return ini && hoje >= ini && hoje <= fim
+    })
+    if (eventosHoje.length > 0) {
+      lista.push({
+        id: 'eventos',
+        tipo: 'aviso',
+        icon: '📅',
+        titulo: `${eventosHoje.length === 1 ? 'Evento' : `${eventosHoje.length} eventos`} hoje`,
+        descricao: eventosHoje.map(ev => `"${ev.titulo}"${ev.local ? ` · ${ev.local}` : ''}`).join(' · '),
+        acao: 'calendario',
+        acaoLabel: 'Ver programação',
+      })
+    }
 
     const esperadas = children.filter(c => !c.data_saida && c.ativo !== false && (c.frequencia_atual?.dias || [1, 2, 3, 4, 5]).includes(diaSemana))
     const semMarcacao = esperadas.filter(c => !chamadaHoje[c.id])

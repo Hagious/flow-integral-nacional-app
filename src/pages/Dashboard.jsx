@@ -40,7 +40,7 @@ function getAge(nasc) {
 }
 
 export default function Dashboard({ setPage }) {
-  const { children, educadoras, rotinaCount, registros } = useApp()
+  const { children, educadoras, rotinaCount, rotinaTotal, registros } = useApp()
   const { user } = useAuth()
   const now = new Date()
   const h = now.getHours()
@@ -93,9 +93,9 @@ export default function Dashboard({ setPage }) {
         <div className="welcome-text">
           <h2>{greeting}{primeiroNome ? `, ${primeiroNome}` : ''}! 🌿</h2>
           <p>{dateStr}</p>
-          <div style={{ marginTop: 10, fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontSize: 14, color: 'var(--ink2)', lineHeight: 1.6, borderLeft: '3px solid var(--gold)', paddingLeft: 12, maxWidth: 620 }}>
+          <div style={{ marginTop: 12, fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontSize: 14, color: '#ffffff', lineHeight: 1.6, borderLeft: '3px solid var(--gold)', paddingLeft: 12, maxWidth: 620, textShadow: '0 1px 2px rgba(0,0,0,0.25)' }}>
             "{QUOTES[quoteIdx].text}"
-            <div style={{ fontSize: 11, color: 'var(--ink3)', marginTop: 4, fontStyle: 'normal' }}>— {QUOTES[quoteIdx].author}</div>
+            <div style={{ fontSize: 11, color: '#f0e6c8', marginTop: 6, fontStyle: 'normal', opacity: 0.95 }}>— {QUOTES[quoteIdx].author}</div>
           </div>
         </div>
         <button
@@ -149,7 +149,7 @@ export default function Dashboard({ setPage }) {
         </div>
         <div className="stat-card">
           <div className="stat-icon gold">✅</div>
-          <div><div className="stat-num">{rotinaCount}/10</div><div className="stat-label">Rotina hoje</div></div>
+          <div><div className="stat-num">{rotinaCount}/{rotinaTotal}</div><div className="stat-label">Rotina hoje</div></div>
         </div>
         <div className="stat-card">
           <div className="stat-icon plum">📝</div>
@@ -229,7 +229,7 @@ export default function Dashboard({ setPage }) {
         <button className="quick-btn" onClick={() => setPage('rotina')}>
           <span className="qb-icon">✅</span>
           <span className="qb-title">Rotina de Hoje</span>
-          <span className="qb-sub">{rotinaCount}/10 concluídos</span>
+          <span className="qb-sub">{rotinaCount}/{rotinaTotal} concluídos</span>
         </button>
         <button className="quick-btn" onClick={() => setPage('educadoras')}>
           <span className="qb-icon">👩‍🏫</span>

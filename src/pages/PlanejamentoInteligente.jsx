@@ -110,11 +110,18 @@ function EducadorasSelect({ tipo, selected, onChange }) {
 }
 
 export default function PlanejamentoInteligente() {
+  const { educadoras, rotinaItems } = useApp()
   const [tab, setTab] = useState('semanal')
   const [meta, setMeta] = useState({
     semana: '2026-04-13', refIds: ['1','2','3'], apoioIds: ['4','5'],
-    propostas: 'Daremos continuidade à pesquisa sobre os ovos, retomando com as crianças a experiência do ovo mergulhado no vinagre. Construção de mapa de palavras e linha do tempo com registros da experiência.', observacao: 'Manter cronograma do banho com revezamento de educadoras para não sobrecarregar. Nesta semana: Érica e Dayane.', revisao: '', ajustes: '', reflexao: ''
+    propostas: 'Daremos continuidade à pesquisa sobre os ovos, retomando com as crianças a experiência do ovo mergulhado no vinagre. Construção de mapa de palavras e linha do tempo com registros da experiência.', observacao: 'Manter cronograma do banho com revezamento de educadoras para não sobrecarregar. Nesta semana: Érica e Dayane.', revisao: '', ajustes: '', reflexao: '',
+    // Override diário da equipe: { 0: { refIds: [...], apoioIds: [...] }, 1: {...} }
+    equipeDiaria: {},
   })
+  // Tarefas por célula: { "slotIdx-diaIdx": [{ educadoraId, tarefa, feito }] }
+  const [tarefasPorCelula, setTarefasPorCelula] = useState({})
+  // Modal de edição expandida
+  const [modalCelula, setModalCelula] = useState(null)
   const [slots, setSlots] = useState(
     SLOTS_BASE.map((s, si) => {
       if (s.principal) {
@@ -293,6 +300,71 @@ export default function PlanejamentoInteligente() {
             </div>
           </div>
 
+          {/* Rotina fixa por dia */}
+          <div className="card" style={{ marginBottom: 16, padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                📌 Rotina fixa da semana
+              </div>
+              <span style={{ fontSize: 10, color: 'var(--ink4)', fontStyle: 'italic' }}>configurada em "Rotina do Dia"</span>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--ink4)', marginBottom: 10 }}>
+              Estes itens entram automaticamente no Registro do Dia — não precisam ser repetidos no quadro abaixo.
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+              {[1, 2, 3, 4, 5].map(diaId => {
+                const itensDoDia = rotinaItems.filter(it => (it.dias || []).includes(diaId))
+                return (
+                  <div key={diaId} style={{ background: 'var(--warm)', border: '1px solid var(--warm3)', borderRadius: 8, padding: '8px 10px', minHeight: 60 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink3)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+                      {DIAS[diaId - 1]}
+                    </div>
+                    {itensDoDia.length === 0 && <div style={{ fontSize: 10, color: 'var(--ink4)', fontStyle: 'italic' }}>—</div>}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {itensDoDia.map(it => (
+                        <span key={it.id} title={it.label} style={{ fontSize: 11, padding: '2px 7px', background: '#fff', border: '1px solid var(--warm3)', borderRadius: 10, color: 'var(--ink2)', whiteSpace: 'nowrap' }}>
+                          {it.icon} {it.label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Equipe do dia (override) */}
+          <div className="card" style={{ marginBottom: 16, padding: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>
+              👥 Equipe efetiva do dia
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--ink4)', marginBottom: 10 }}>
+              Padrão = equipe da semana. Ajuste aqui caso alguém tenha faltado ou sido substituído em um dia específico.
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+              {DIAS.map((dia, di) => {
+                const over = meta.equipeDiaria?.[di]
+                const refIds = over?.refIds ?? meta.refIds ?? []
+                const apoioIds = over?.apoioIds ?? meta.apoioIds ?? []
+                const nomes = educadoras
+                  .filter(e => refIds.includes(e.id) || refIds.includes(e.nome) || apoioIds.includes(e.id) || apoioIds.includes(e.nome))
+                  .map(e => e.nome)
+                return (
+                  <button key={dia} type="button"
+                    onClick={() => setModalCelula({ si: -1, di, modo: 'equipe' })}
+                    style={{ background: over ? '#faeeda' : 'var(--warm)', border: `1px solid ${over ? '#FAC775' : 'var(--warm3)'}`, borderRadius: 8, padding: '8px 10px', cursor: 'pointer', textAlign: 'left' }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: over ? '#633806' : 'var(--ink2)', marginBottom: 4 }}>
+                      {dia}{over && ' ✎'}
+                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--ink3)', lineHeight: 1.35 }}>
+                      {nomes.length > 0 ? nomes.join(', ') : 'Sem equipe definida'}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           {/* Equilíbrio BNCC */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
             {CAMPOS_EXPERIENCIA.map(c => (
@@ -358,9 +430,16 @@ export default function PlanejamentoInteligente() {
                                 </span>
                               )}
                               <button
+                                onClick={() => setModalCelula({ si, di })}
+                                style={{ fontSize: 9, padding: '1px 7px', borderRadius: 8, border: 'none', background: '#fff', color: 'var(--ink2)', cursor: 'pointer', fontWeight: 600, flexShrink: 0, marginLeft: 'auto', border: '1px solid var(--warm3)' }}
+                                title="Expandir para edição completa"
+                              >
+                                ✏️ Expandir
+                              </button>
+                              <button
                                 onClick={() => handleCompletarCelula(si, di, cell)}
                                 disabled={isLoading}
-                                style={{ fontSize: 9, padding: '1px 7px', borderRadius: 8, border: 'none', background: isLoading ? '#e0e0e0' : 'var(--sage)', color: '#fff', cursor: 'pointer', fontWeight: 600, flexShrink: 0, marginLeft: 'auto' }}
+                                style={{ fontSize: 9, padding: '1px 7px', borderRadius: 8, border: 'none', background: isLoading ? '#e0e0e0' : 'var(--sage)', color: '#fff', cursor: 'pointer', fontWeight: 600, flexShrink: 0 }}
                                 title="Completar com IA no padrão Micheline"
                               >
                                 {isLoading ? '...' : '✨ IA'}
@@ -415,6 +494,120 @@ export default function PlanejamentoInteligente() {
           <button className="btn btn-primary btn-sm" onClick={() => toast('Salvo!')}>💾 Salvar</button>
         </div>
       )}
+
+      {/* Modal: edição expandida de célula / equipe do dia */}
+      {modalCelula && (() => {
+        const { si, di, modo } = modalCelula
+        const isEquipeOnly = modo === 'equipe' || si === -1
+        const slot = si >= 0 ? slots[si] : null
+        const cellValue = slot ? slot.cells[di] : ''
+        const chave = `${si}-${di}`
+        const tarefas = tarefasPorCelula[chave] || []
+        const overDia = meta.equipeDiaria?.[di]
+        const refAtivos = overDia?.refIds ?? meta.refIds ?? []
+        const apoioAtivos = overDia?.apoioIds ?? meta.apoioIds ?? []
+        const setEquipeDia = (patch) => setMeta(p => ({ ...p, equipeDiaria: { ...(p.equipeDiaria || {}), [di]: { refIds: refAtivos, apoioIds: apoioAtivos, ...(p.equipeDiaria?.[di] || {}), ...patch } } }))
+        const limparOverride = () => setMeta(p => { const n = { ...(p.equipeDiaria || {}) }; delete n[di]; return { ...p, equipeDiaria: n } })
+        const addTarefa = () => setTarefasPorCelula(p => ({ ...p, [chave]: [...(p[chave] || []), { id: Date.now().toString(), educadoraId: '', tarefa: '', feito: false, obs: '' }] }))
+        const updTarefa = (idx, patch) => setTarefasPorCelula(p => ({ ...p, [chave]: p[chave].map((t, i) => i === idx ? { ...t, ...patch } : t) }))
+        const rmTarefa = (idx) => setTarefasPorCelula(p => ({ ...p, [chave]: p[chave].filter((_, i) => i !== idx) }))
+        const equipeIds = [...refAtivos, ...apoioAtivos]
+        const equipeEducadoras = educadoras.filter(e => equipeIds.includes(e.id) || equipeIds.includes(e.nome))
+
+        return (
+          <div className="modal-overlay" onClick={() => setModalCelula(null)}>
+            <div className="modal" style={{ maxWidth: 780 }} onClick={e => e.stopPropagation()}>
+              <div className="modal-title">
+                {isEquipeOnly ? `👥 Equipe do dia — ${DIAS[di]}` : `✏️ Edição da atividade — ${DIAS[di]}`}
+              </div>
+
+              {!isEquipeOnly && (
+                <div className="form-group">
+                  <label className="form-label">Descrição completa da atividade</label>
+                  <textarea
+                    className="form-input"
+                    style={{ minHeight: 260, fontFamily: 'DM Sans, sans-serif', fontSize: 13, lineHeight: 1.6 }}
+                    value={cellValue}
+                    onChange={e => updateCell(si, di, e.target.value)}
+                    placeholder="Título, espaço, descrição, objetivos BNCC, campos de experiência..."
+                  />
+                  <div style={{ fontSize: 11, color: 'var(--ink4)', marginTop: 4 }}>
+                    Dica: mantenha a estrutura — TÍTULO / (ESPAÇO) / descrição / objetivos / campos de experiência.
+                  </div>
+                </div>
+              )}
+
+              {/* Equipe do dia */}
+              <div style={{ background: 'var(--warm)', borderRadius: 8, padding: 14, marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink2)', marginBottom: 8 }}>👥 Equipe efetiva no dia</div>
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 4 }}>Referência</div>
+                  <EducadorasSelect tipo="Referência" selected={refAtivos} onChange={ids => setEquipeDia({ refIds: ids })} />
+                </div>
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 4 }}>Apoio</div>
+                  <EducadorasSelect tipo="Apoio" selected={apoioAtivos} onChange={ids => setEquipeDia({ apoioIds: ids })} />
+                </div>
+                {overDia && (
+                  <button className="btn btn-ghost btn-xs" onClick={limparOverride}>
+                    ↺ Voltar para equipe padrão da semana
+                  </button>
+                )}
+              </div>
+
+              {/* Tarefas por educadora */}
+              {!isEquipeOnly && (
+                <div style={{ background: 'var(--warm)', borderRadius: 8, padding: 14, marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink2)' }}>📋 Tarefas por educadora / apoio</div>
+                    <button className="btn btn-ghost btn-xs" onClick={addTarefa}>+ Tarefa</button>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--ink4)', marginBottom: 10 }}>
+                    Defina o que cada pessoa faz nesta atividade. Ao final, marque se foi cumprido — alimenta o relatório de participação.
+                  </div>
+                  {tarefas.length === 0 && <div style={{ fontSize: 12, color: 'var(--ink4)', fontStyle: 'italic' }}>Nenhuma tarefa definida ainda.</div>}
+                  {tarefas.map((t, i) => (
+                    <div key={t.id} style={{ background: '#fff', borderRadius: 6, padding: 10, marginBottom: 8, border: `1px solid ${t.feito ? '#c5d9c9' : 'var(--warm3)'}` }}>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                        <input type="checkbox" checked={t.feito} onChange={e => updTarefa(i, { feito: e.target.checked })} style={{ marginTop: 4 }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+                            <select className="form-input" style={{ flex: 1, fontSize: 12 }} value={t.educadoraId} onChange={e => updTarefa(i, { educadoraId: e.target.value })}>
+                              <option value="">— selecione —</option>
+                              {equipeEducadoras.map(e => <option key={e.id} value={e.id}>{e.nome} ({e.tipo})</option>)}
+                            </select>
+                            <button className="btn btn-ghost btn-xs" onClick={() => rmTarefa(i)}>Remover</button>
+                          </div>
+                          <input
+                            className="form-input"
+                            style={{ fontSize: 12, marginBottom: 6, textDecoration: t.feito ? 'line-through' : 'none', color: t.feito ? 'var(--ink4)' : 'var(--ink2)' }}
+                            value={t.tarefa}
+                            onChange={e => updTarefa(i, { tarefa: e.target.value })}
+                            placeholder="O que esta pessoa vai fazer durante a atividade"
+                          />
+                          {t.feito !== undefined && (
+                            <input
+                              className="form-input"
+                              style={{ fontSize: 11, padding: '6px 10px' }}
+                              value={t.obs}
+                              onChange={e => updTarefa(i, { obs: e.target.value })}
+                              placeholder="Observação final (opcional): como foi, por que não cumpriu..."
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="modal-actions">
+                <button className="btn btn-primary btn-sm" onClick={() => setModalCelula(null)}>Fechar</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Painel lateral: banco de atividades para alocar */}
       {showBanco && (

@@ -14,6 +14,7 @@ import Usuarios from './pages/Usuarios.jsx'
 import Ocorrencias from './pages/Ocorrencias.jsx'
 import Feedbacks from './pages/Feedbacks.jsx'
 import Chat from './pages/Chat.jsx'
+import Calendario from './pages/Calendario.jsx'
 import { Inclusao, DiarioFotos, Educadoras, RegistroDiario, Relatorios } from './pages/OtherPages.jsx'
 import { Auditoria, ControlePonto } from './pages/AdminPages.jsx'
 
@@ -32,6 +33,7 @@ const NAV = [
   { id: 'inclusao', label: 'Inclusão', icon: '🧠' },
   { section: 'Diário' },
   { id: 'rotina', label: 'Rotina do Dia', icon: '✅' },
+  { id: 'calendario', label: 'Calendário', icon: '📆' },
   { id: 'fotos', label: 'Diário Fotográfico', icon: '📸' },
   { id: 'jornal', label: 'Jornal Literário', icon: '📰' },
   { section: 'Equipe' },
@@ -122,6 +124,7 @@ function AppInner() {
     'ocorrencias': <Ocorrencias />,
     'feedbacks': <Feedbacks />,
     'chat': <Chat />,
+    'calendario': <Calendario />,
     'inclusao': <Inclusao />,
     'rotina': <Rotina />,
     'fotos': <DiarioFotos />,

@@ -17,6 +17,9 @@ export const MODULOS = [
   { id: 'educadoras',       nome: 'Educadoras',          icone: '👩‍🏫', categoria: 'equipe' },
   { id: 'ponto',            nome: 'Controle de Ponto',   icone: '⏱️', categoria: 'equipe' },
   { id: 'relatorios',       nome: 'Relatórios',          icone: '📊', categoria: 'equipe' },
+  { id: 'calendario',       nome: 'Calendário',          icone: '📆', categoria: 'diario' },
+  { id: 'feedbacks',        nome: 'Feedbacks',           icone: '💬', categoria: 'equipe' },
+  { id: 'chat',             nome: 'Chat interno',        icone: '💭', categoria: 'equipe' },
   { id: 'usuarios',         nome: 'Usuários e Acessos',  icone: '🔐', categoria: 'admin' },
   { id: 'auditoria',        nome: 'Auditoria',           icone: '🔍', categoria: 'admin' },
 ]
@@ -47,7 +50,7 @@ export const GRUPOS_PADRAO = {
   'RH': {
     cor: '#185fa5',
     permissoes: Object.fromEntries(MODULOS.map(m => [m.id, {
-      ver: ['dashboard','educadoras','ponto','relatorios'].includes(m.id),
+      ver: ['dashboard','educadoras','ponto','relatorios','feedbacks','chat','calendario'].includes(m.id),
       criar: false, editar: false, excluir: false
     }]))
   },

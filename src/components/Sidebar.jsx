@@ -13,6 +13,7 @@ const NAV = [
   { id: 'inclusao', label: 'Inclusão', icon: '🧠' },
   { section: 'Diário' },
   { id: 'rotina', label: 'Rotina do Dia', icon: '✅' },
+  { id: 'calendario', label: 'Calendário', icon: '📆' },
   { id: 'fotos', label: 'Diário Fotográfico', icon: '📸' },
   { id: 'jornal', label: 'Jornal Literário', icon: '📰' },
   { section: 'Equipe' },
