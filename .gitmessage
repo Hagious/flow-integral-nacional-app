@@ -1,0 +1,30 @@
+# Commit message template
+# Use o formato abaixo para manter mensagens de commit claras e consistentes.
+# Exemplo: feat(dashboard): adicionar humor diário e saudação personalizada
+
+# type(scope): breve descrição
+#
+# body opcional com mais contexto, se necessário.
+#
+# Tipos permitidos:
+# feat: nova funcionalidade
+# fix: correção de bug
+# docs: documentação
+# style: formato / estilo / espaçamento
+# refactor: refatoração de código sem nova feature nem correção
+# perf: melhoria de performance
+# test: adição/ajuste de testes
+# chore: manutenção, build ou infraestrutura
+
+# Use um escopo curto quando fizer sentido:
+# dashboard, supabase, readme, hooks, components, etc.
+
+# Obrigatório:
+# - tipo(scope): descrição curta
+# - evitar texto no imperativo
+# - usar letras minúsculas
+
+# Exemplo de mensagem completa:
+# feat(dashboard): adicionar humor diário e saudação personalizada
+#
+# Ao usar o body, explique o porquê da mudança e qualquer comportamento relevante.

@@ -64,6 +64,27 @@ Os arquivos gerados ficam em `dist/`.
 
 ---
 
+## 🔖 Convenção de commits
+A partir de agora, adote o padrão de commits abaixo para manter o histórico claro e consistente:
+
+- `feat(scope): descrição sucinta` — nova funcionalidade
+- `fix(scope): descrição sucinta` — correção de bug
+- `docs(scope): descrição sucinta` — documentação
+- `style(scope): descrição sucinta` — formatação ou estilo
+- `refactor(scope): descrição sucinta` — refatoração
+- `perf(scope): descrição sucinta` — melhoria de performance
+- `test(scope): descrição sucinta` — testes
+- `chore(scope): descrição sucinta` — manutenção, build ou infraestrutura
+
+Use um `scope` curto e sem espaços para identificar a área afetada, por exemplo: `dashboard`, `supabase`, `readme`, `hooks`.
+
+Exemplo:
+`feat(dashboard): adicionar humor diário e saudação personalizada`
+
+Para facilitar, o repositório inclui um template de commit em `.gitmessage`.
+
+---
+
 ## ☁️ Configuração do Supabase
 ### 1. Criar projeto Supabase
 - Acesse [supabase.com](https://supabase.com) e crie um projeto
