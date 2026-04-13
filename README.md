@@ -22,6 +22,8 @@ O app oferece funcionalidades para a rotina pedagógica diária, com foco em Edu
 - Planejamento semanal com suporte a IA e validação de conteúdo
 - Banco de atividades pedagógicas com histórico e edição
 - Planejamento inteligente com rotina diária automática, equipe do dia e edição expandida de atividades
+- Modal de compartilhamento e exportação para e-mail, cópia e impressão/PDF
+- Novo fluxo de comunicação com Chat e Feedbacks
 - Diário fotográfico e jornal literário com template de impressão
 - Ocorrências e acompanhamento pedagógico
 - Modo local quando não há conexão com Supabase
@@ -33,6 +35,8 @@ O app oferece funcionalidades para a rotina pedagógica diária, com foco em Edu
 - Adicionada documentação profissional de workflow para commits, PRs e issues
 - Arquivos novos: `.gitmessage`, `CONTRIBUTING.md`, `.github/commit-convention.md`, `.github/pull_request_template.md`, `.github/issue_template.md`
 - Atualizado Planejamento Inteligente com rotina fixa por dia, equipe efetiva do dia e modal de edição expandida de células
+- Adicionado modal de compartilhamento/exportação para e-mail, cópia e impressão
+- Novas páginas adicionadas: Chat, Calendário e Feedbacks
 - Utilize esses padrões para manter consistência entre este e outros projetos
 
 ---
