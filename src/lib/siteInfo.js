@@ -1,0 +1,3 @@
+export const COPYRIGHT = '© 2026 HAGIOUS TECNOLOGIA E SERVICOS LTDA'
+export const CNPJ = '19.393.142/0001-94'
+export const LAST_UPDATE = '13/04/2026'

@@ -1,4 +1,5 @@
 import { useApp } from '../context/AppContext.jsx'
+import { COPYRIGHT, CNPJ, LAST_UPDATE } from '../lib/siteInfo.js'
 
 const NAV = [
   { section: 'Principal' },
@@ -24,7 +25,7 @@ const MONTHS = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov
 const LOGO = 'https://static.wixstatic.com/media/69e7d2_ea11d63068d34e6ba1e0d23b8bcee0d8~mv2.jpg/v1/fill/w_100,h_65,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/69e7d2_ea11d63068d34e6ba1e0d23b8bcee0d8~mv2.jpg'
 
 export default function Sidebar({ page, setPage }) {
-  const { rotinaCount, dbConnected, dbMode } = useApp()
+  const { rotinaCount, rotinaTotal, dbConnected, dbMode } = useApp()
   const now = new Date()
 
   return (
@@ -53,7 +54,7 @@ export default function Sidebar({ page, setPage }) {
               {item.label}
               {item.badge && <span className="nav-badge" style={badgeStyle}>{item.badge}</span>}
               {item.id === 'rotina' && rotinaCount > 0 && (
-                <span className="nav-badge" style={{ background: 'var(--sage)' }}>{rotinaCount}/10</span>
+                <span className="nav-badge" style={{ background: 'var(--sage)' }}>{rotinaCount}/{rotinaTotal}</span>
               )}
             </button>
           )
@@ -80,6 +81,11 @@ export default function Sidebar({ page, setPage }) {
         <div className="today-pill">
           <div className="tp-label">Hoje</div>
           <div className="tp-day">{DAYS[now.getDay()]}, {now.getDate()} {MONTHS[now.getMonth()]}</div>
+        </div>
+        <div style={{ marginTop: 10, fontSize: 9, color: 'rgba(255,255,255,0.45)', lineHeight: 1.4 }}>
+          <div>{COPYRIGHT}</div>
+          <div>CNPJ {CNPJ}</div>
+          <div>Última atualização: {LAST_UPDATE}</div>
         </div>
       </div>
     </aside>

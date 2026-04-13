@@ -195,6 +195,7 @@ src/
   - scripts do npm
   - arquitetura de pastas
 - O README deve ser a primeira referência para qualquer pessoa entender o projeto.
+- Atualize também `src/lib/siteInfo.js` com a nova data ao publicar mudanças na `main`.
 
 ---
 
