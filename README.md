@@ -82,7 +82,7 @@ Exemplo:
 `feat(dashboard): adicionar humor diário e saudação personalizada`
 
 Para facilitar, o repositório inclui um template de commit em `.gitmessage`.
-Veja também a convenção compartilhada em `.github/commit-convention.md`, o guia de contribuição em `CONTRIBUTING.md` e o modelo de pull request em `.github/pull_request_template.md`.
+Veja também a convenção compartilhada em `.github/commit-convention.md`, o guia de contribuição em `CONTRIBUTING.md`, o modelo de pull request em `.github/pull_request_template.md` e o template de issue em `.github/issue_template.md`.
 
 ---
 
