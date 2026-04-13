@@ -1,4 +1,5 @@
-import { useState, Fragment } from 'react'
+import { useState, useMemo, Fragment } from 'react'
+import ShareExportModal from '../components/ShareExportModal.jsx'
 import { useApp } from '../context/AppContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 
@@ -52,7 +53,12 @@ export function DiarioFotos() {
   const { diario, addDiarioEntry, showToast } = useApp()
   const [tab, setTab] = useState('dia')
   const [resumo, setResumo] = useState('')
+  const [shareOpen, setShareOpen] = useState(false)
   const today = new Date().toISOString().split('T')[0]
+
+  const textoShare = diario.length === 0
+    ? `Resumo do dia ${today.split('-').reverse().join('/')}\n\n${resumo || '(sem resumo)'}`
+    : diario.slice(0, 10).map(d => `📅 ${d.data?.split('-').reverse().join('/')}\n${d.resumo || ''}`).join('\n\n───\n\n')
 
   return (
     <div className="page-wrap">
@@ -61,9 +67,18 @@ export function DiarioFotos() {
         <div className="page-subtitle">Registros visuais e resumos pedagógicos</div></div>
         <div className="header-actions">
           <button className="btn btn-ghost btn-sm" onClick={() => showToast('Resumo gerado com IA! ✨')}>✨ Gerar com IA</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShareOpen(true)}>📤 Compartilhar</button>
           <button className="btn btn-primary btn-sm">+ Adicionar Fotos</button>
         </div>
       </div>
+      <ShareExportModal
+        aberto={shareOpen}
+        onClose={() => setShareOpen(false)}
+        titulo="Diário Fotográfico"
+        subtitulo={`${diario.length} registro(s)`}
+        conteudoTexto={textoShare}
+        linkRelativo="Diário Fotográfico"
+      />
       <div className="tabs">
         {['dia','semana','mês','período'].map(t => (
           <button key={t} className={`tab${tab===t?' active':''}`} onClick={()=>setTab(t)}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
@@ -102,6 +117,7 @@ export function DiarioFotos() {
 // ─── JORNAL LITERÁRIO ────────────────────────────────────────
 export function JornalLiterario() {
   const { showToast } = useApp()
+  const [shareOpen, setShareOpen] = useState(false)
   const [atividades, setAtividades] = useState([
     { titulo: '🌿 Assembleia das Crianças', texto: 'As crianças participaram ativamente da votação do nome da turma, discutindo as características de cada pássaro. Surgiram hipóteses riquíssimas sobre os hábitos dos animais e a relação deles com a escola.' },
     { titulo: '🌱 Vivência na Horta', texto: 'Em pequenos grupos, as crianças realizaram a colheita e manutenção dos canteiros, desenvolvendo cooperação, responsabilidade e conexão com a natureza.' },
@@ -119,9 +135,18 @@ export function JornalLiterario() {
         <div className="header-actions">
           <button className="btn btn-ghost btn-sm" onClick={() => showToast('Momentos sugeridos com IA! ✨')}>✨ Sugerir Momentos</button>
           <button className="btn btn-ghost btn-sm" onClick={addAtividade}>+ Atividade</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShareOpen(true)}>📤 Compartilhar</button>
           <button className="btn btn-primary btn-sm" onClick={() => window.print()}>🖨️ Imprimir</button>
         </div>
       </div>
+      <ShareExportModal
+        aberto={shareOpen}
+        onClose={() => setShareOpen(false)}
+        titulo="Jornal Literário"
+        subtitulo={`${atividades.length} atividade(s)`}
+        conteudoTexto={atividades.map(a => `${a.titulo}\n${a.texto}`).join('\n\n───\n\n')}
+        linkRelativo="Jornal Literário"
+      />
       <div className="jornal-preview">
         <div className="jornal-header">
           <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--ink3)', marginBottom: 8 }}>Período Integral · Educação Infantil</div>
@@ -649,6 +674,9 @@ export function RegistroDiario() {
   const [selectedChild, setSelectedChild] = useState(null)
   const [obsMap, setObsMap] = useState({}) // { criancaId: { data: texto } }
   const [savedDates, setSavedDates] = useState(() => { try { return JSON.parse(localStorage.getItem('integral_registro_datas') || '[]') } catch { return [] } })
+  const [shareOpen, setShareOpen] = useState(false)
+  const [shareIni, setShareIni] = useState('')
+  const [shareFim, setShareFim] = useState('')
 
   function getObs(criancaId) { return obsMap[criancaId]?.[data] || '' }
   function setObs(criancaId, texto) {
@@ -684,6 +712,7 @@ export function RegistroDiario() {
         <div className="header-actions">
           <input type="date" className="form-input" style={{ width: 'auto' }} value={data} onChange={e => loadDate(e.target.value)} />
           <button className="btn btn-ghost btn-sm" onClick={() => window.print()}>🖨️ Imprimir</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => { setShareIni(data); setShareFim(data); setShareOpen(true) }}>📤 Compartilhar</button>
           <button className="btn btn-primary btn-sm" onClick={save}>✓ Salvar tudo</button>
         </div>
       </div>
@@ -808,6 +837,54 @@ Cognitivo — levantou hipóteses sobre a sombra das árvores`}
           </div>
         </div>
       </div>
+
+      {shareOpen && (() => {
+        // Coleta registros do período
+        const datasNoRange = []
+        const ini = shareIni || data
+        const fim = shareFim || shareIni || data
+        const d0 = new Date(ini + 'T12:00'); const d1 = new Date(fim + 'T12:00')
+        while (d0 <= d1) { datasNoRange.push(d0.toISOString().split('T')[0]); d0.setDate(d0.getDate() + 1) }
+        const entradas = datasNoRange.map(d => {
+          const saved = (() => { try { return JSON.parse(localStorage.getItem('integral_registro_' + d) || 'null') } catch { return null } })()
+          return { data: d, saved }
+        }).filter(x => x.saved)
+        const txt = entradas.length === 0 ? 'Nenhum registro salvo no período.' : entradas.map(({ data: d, saved }) => {
+          const f = saved.form || {}
+          return [
+            `📅 ${d.split('-').reverse().join('/')}`,
+            f.atividade && `Atividade: ${f.atividade}`,
+            f.como && `Como foi: ${f.como}`,
+            f.surgiu && `Surgiu: ${f.surgiu}`,
+            f.falas && `Falas: ${f.falas}`,
+            f.hipoteses && `Hipóteses: ${f.hipoteses}`,
+            f.situacao && `Situação: ${f.situacao}`,
+            f.reflexao && `Reflexão: ${f.reflexao}`,
+          ].filter(Boolean).join('\n')
+        }).join('\n\n───\n\n')
+        const htmlPreview = (
+          <div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+              <input type="date" className="form-input" style={{ width: 140 }} value={shareIni} onChange={e => setShareIni(e.target.value)} />
+              <span style={{ alignSelf: 'center', fontSize: 11, color: 'var(--ink3)' }}>até</span>
+              <input type="date" className="form-input" style={{ width: 140 }} value={shareFim} onChange={e => setShareFim(e.target.value)} />
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--ink3)', marginBottom: 6 }}>{entradas.length} registro(s) encontrado(s)</div>
+            <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>{txt}</pre>
+          </div>
+        )
+        return (
+          <ShareExportModal
+            aberto={shareOpen}
+            onClose={() => setShareOpen(false)}
+            titulo="Registro(s) do Dia"
+            subtitulo={shareIni === shareFim ? shareIni.split('-').reverse().join('/') : `${shareIni.split('-').reverse().join('/')} a ${shareFim.split('-').reverse().join('/')}`}
+            conteudoTexto={txt}
+            conteudoPreview={htmlPreview}
+            linkRelativo="Registro do Dia"
+          />
+        )
+      })()}
     </div>
   )
 }
@@ -815,6 +892,72 @@ Cognitivo — levantou hipóteses sobre a sombra das árvores`}
 // ─── RELATÓRIOS ──────────────────────────────────────────────
 export function Relatorios() {
   const { children, educadoras, registros, rotinaCount, rotinaTotal } = useApp()
+  const [periodo, setPeriodo] = useState(() => {
+    const h = new Date()
+    const ini = new Date(h.getFullYear(), h.getMonth(), 1).toISOString().split('T')[0]
+    const fim = new Date(h.getFullYear(), h.getMonth() + 1, 0).toISOString().split('T')[0]
+    return { ini, fim }
+  })
+  const [filtroTipo, setFiltroTipo] = useState('geral') // geral | crianca | educadora
+  const [shareOpen, setShareOpen] = useState(false)
+
+  // Dados agregados do período
+  const { ocorrencias, chamada, ponto } = useMemo(() => ({
+    ocorrencias: lsGetOP('integral_ocorrencias', []),
+    chamada: lsGetOP('integral_chamada', {}),
+    ponto: lsGetOP('integral_ponto', {}),
+  }), [shareOpen, periodo])
+
+  const ocNoPeriodo = ocorrencias.filter(o => o.data >= periodo.ini && o.data <= periodo.fim)
+  const breakdownCategorias = ocNoPeriodo.reduce((acc, o) => {
+    acc[o.categoria] = (acc[o.categoria] || 0) + 1
+    return acc
+  }, {})
+  const breakdownGravidade = ocNoPeriodo.reduce((acc, o) => {
+    acc[o.gravidade] = (acc[o.gravidade] || 0) + 1
+    return acc
+  }, {})
+
+  // Faltas por criança no período
+  const faltasPorCrianca = children.map(c => {
+    let faltas = 0, presentes = 0
+    Object.entries(chamada).forEach(([d, regs]) => {
+      if (d < periodo.ini || d > periodo.fim) return
+      if (regs[c.id] === 'falta') faltas++
+      if (regs[c.id] === 'presente') presentes++
+    })
+    const ocEnv = ocNoPeriodo.filter(o => o.criancas_ids?.includes(c.id)).length
+    return { crianca: c, faltas, presentes, ocorrencias: ocEnv }
+  })
+
+  // Faltas por educadora no período
+  const faltasPorEdu = educadoras.map(e => {
+    const regs = ponto[e.id] || {}
+    let faltas = 0, justificadas = 0, presentes = 0
+    Object.entries(regs).forEach(([d, reg]) => {
+      if (d < periodo.ini || d > periodo.fim) return
+      if (reg.status === 'F') faltas++
+      else if (reg.status === 'J') justificadas++
+      else presentes++
+    })
+    const ocEnv = ocNoPeriodo.filter(o => o.educadoras_ids?.includes(e.id)).length
+    return { edu: e, faltas, justificadas, presentes, ocorrencias: ocEnv }
+  })
+
+  const textoRelatorio = [
+    `Período: ${periodo.ini.split('-').reverse().join('/')} a ${periodo.fim.split('-').reverse().join('/')}`,
+    '',
+    `— OCORRÊNCIAS (${ocNoPeriodo.length}) —`,
+    `Por categoria: ${Object.entries(breakdownCategorias).map(([k, v]) => `${k}:${v}`).join(', ') || 'nenhuma'}`,
+    `Por gravidade: ${Object.entries(breakdownGravidade).map(([k, v]) => `${k}:${v}`).join(', ') || 'nenhuma'}`,
+    '',
+    `— FREQUÊNCIA CRIANÇAS —`,
+    ...faltasPorCrianca.map(x => `${x.crianca.nome}: ${x.presentes} presenças, ${x.faltas} faltas, ${x.ocorrencias} ocorrência(s)`),
+    '',
+    `— FREQUÊNCIA EDUCADORAS —`,
+    ...faltasPorEdu.map(x => `${x.edu.nome} (${x.edu.tipo}): ${x.presentes} presenças, ${x.faltas} faltas, ${x.justificadas} just., ${x.ocorrencias} ocorrência(s)`),
+  ].join('\n')
+
   const weekBars = [8, 9, 7, 10, rotinaCount]
 
   return (
@@ -822,55 +965,159 @@ export function Relatorios() {
       <div className="page-header">
         <div><div className="page-title"><span className="title-icon">📊</span> Relatórios</div>
         <div className="page-subtitle">Visão geral do trabalho pedagógico</div></div>
-        <button className="btn btn-ghost btn-sm" onClick={() => window.print()}>🖨️ Imprimir</button>
+        <div className="header-actions">
+          <button className="btn btn-ghost btn-sm" onClick={() => setShareOpen(true)}>📤 Compartilhar</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => window.print()}>🖨️ Imprimir</button>
+        </div>
+      </div>
+
+      <ShareExportModal
+        aberto={shareOpen}
+        onClose={() => setShareOpen(false)}
+        titulo="Relatório Geral"
+        subtitulo={`${periodo.ini.split('-').reverse().join('/')} a ${periodo.fim.split('-').reverse().join('/')}`}
+        conteudoTexto={textoRelatorio}
+        linkRelativo="Relatórios"
+      />
+
+      {/* Filtros */}
+      <div className="card" style={{ marginBottom: 16, display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <div className="form-group" style={{ margin: 0 }}>
+          <label className="form-label">De</label>
+          <input type="date" className="form-input" value={periodo.ini} onChange={e => setPeriodo(p => ({ ...p, ini: e.target.value }))} />
+        </div>
+        <div className="form-group" style={{ margin: 0 }}>
+          <label className="form-label">Até</label>
+          <input type="date" className="form-input" value={periodo.fim} onChange={e => setPeriodo(p => ({ ...p, fim: e.target.value }))} />
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button className="btn btn-ghost btn-xs" onClick={() => {
+            const h = new Date()
+            setPeriodo({ ini: new Date(h.getFullYear(), h.getMonth(), 1).toISOString().split('T')[0], fim: new Date(h.getFullYear(), h.getMonth() + 1, 0).toISOString().split('T')[0] })
+          }}>Mês atual</button>
+          <button className="btn btn-ghost btn-xs" onClick={() => {
+            const h = new Date()
+            setPeriodo({ ini: new Date(h.getFullYear(), 0, 1).toISOString().split('T')[0], fim: new Date(h.getFullYear(), 11, 31).toISOString().split('T')[0] })
+          }}>Ano</button>
+        </div>
+        <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
+          {[['geral','Geral'],['crianca','Por criança'],['educadora','Por educadora']].map(([k, l]) => (
+            <button key={k} onClick={() => setFiltroTipo(k)}
+              style={{ padding: '5px 14px', borderRadius: 16, fontSize: 12, cursor: 'pointer', border: `1.5px solid ${filtroTipo === k ? 'var(--sage)' : 'var(--warm3)'}`, background: filtroTipo === k ? 'var(--sage-light)' : '#fff', color: filtroTipo === k ? 'var(--sage-dark)' : 'var(--ink3)', fontWeight: filtroTipo === k ? 600 : 400 }}>
+              {l}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="grid-4" style={{ marginBottom: 24 }}>
         <div className="stat-card"><div className="stat-icon green">🧒</div><div><div className="stat-num">{children.length}</div><div className="stat-label">Crianças</div></div></div>
         <div className="stat-card"><div className="stat-icon terra">👩‍🏫</div><div><div className="stat-num">{educadoras.length}</div><div className="stat-label">Educadoras</div></div></div>
-        <div className="stat-card"><div className="stat-icon gold">📝</div><div><div className="stat-num">{registros.length}</div><div className="stat-label">Registros</div></div></div>
+        <div className="stat-card"><div className="stat-icon gold">⚡</div><div><div className="stat-num">{ocNoPeriodo.length}</div><div className="stat-label">Ocorrências período</div></div></div>
         <div className="stat-card"><div className="stat-icon plum">✅</div><div><div className="stat-num">{rotinaCount}/{rotinaTotal}</div><div className="stat-label">Rotina hoje</div></div></div>
       </div>
-      <div className="grid-2">
-        <div className="card">
-          <div className="card-title">📊 Rotina — Semana atual</div>
-          <div className="mini-chart">
-            {weekBars.map((v,i) => <div key={i} className="chart-bar" style={{ height: `${v/10*100}%`, background: i===4?'var(--sage)':'var(--sage-mid)' }} />)}
-          </div>
-          <div className="chart-labels">{['Seg','Ter','Qua','Qui','Sex'].map(d=><div key={d} className="chart-label">{d}</div>)}</div>
-        </div>
-        <div className="card">
-          <div className="card-title">👩‍🏫 Educadoras — Presença</div>
-          {educadoras.map((e, i) => (
-            <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-              <div className="avatar" style={{ width: 28, height: 28, fontSize: 10, background: (e.cor||['#e8f0eb','#2d5240'])[0], color: (e.cor||['#e8f0eb','#2d5240'])[1] }}>{e.nome.substring(0,2).toUpperCase()}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                  <span style={{ fontSize: 12 }}>{e.nome}</span>
-                  <span style={{ fontSize: 11, color: 'var(--ink3)' }}>95%</span>
+
+      {filtroTipo === 'geral' && (
+        <div className="grid-2">
+          <div className="card">
+            <div className="card-title">⚡ Ocorrências por categoria</div>
+            {Object.keys(breakdownCategorias).length === 0 && <div style={{ fontSize: 13, color: 'var(--ink4)' }}>Nenhuma ocorrência no período</div>}
+            {Object.entries(breakdownCategorias).map(([cat, n]) => (
+              <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <div style={{ flex: 1, fontSize: 12, color: 'var(--ink2)', textTransform: 'capitalize' }}>{cat.replace('_', ' ')}</div>
+                <div style={{ flex: 2, height: 8, background: 'var(--warm2)', borderRadius: 4, overflow: 'hidden' }}>
+                  <div style={{ width: `${(n / ocNoPeriodo.length) * 100}%`, height: '100%', background: 'var(--terracotta)' }} />
                 </div>
-                <div className="progress-bar" style={{ marginBottom: 0 }}><div className="progress-fill" style={{ width: '95%' }} /></div>
+                <div style={{ fontSize: 12, fontWeight: 600, minWidth: 26, textAlign: 'right' }}>{n}</div>
               </div>
-            </div>
-          ))}
-        </div>
-        <div className="card" style={{ gridColumn: '1 / -1' }}>
-          <div className="card-title">🧒 Registros por criança</div>
-          {children.length === 0 ? <div style={{ fontSize: 13, color: 'var(--ink3)' }}>Nenhuma criança cadastrada</div> : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
-              {children.map(c => (
-                <div key={c.id} style={{ background: 'var(--warm)', borderRadius: 'var(--r2)', padding: '12px 14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                    <div className="avatar" style={{ width: 28, height: 28, fontSize: 11, background: c.cor[0], color: c.cor[1] }}>{c.nome.substring(0,1).toUpperCase()}</div>
-                    <div style={{ fontSize: 13, fontWeight: 500 }}>{c.nome}</div>
+            ))}
+          </div>
+          <div className="card">
+            <div className="card-title">▲ Ocorrências por gravidade</div>
+            {Object.keys(breakdownGravidade).length === 0 && <div style={{ fontSize: 13, color: 'var(--ink4)' }}>Nenhuma ocorrência no período</div>}
+            {[['baixa','#27500a'],['media','#854f0b'],['alta','#a32d2d'],['critica','#791f1f']].map(([g, cor]) => (
+              breakdownGravidade[g] > 0 && (
+                <div key={g} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                  <div style={{ flex: 1, fontSize: 12, color: 'var(--ink2)', textTransform: 'capitalize' }}>{g}</div>
+                  <div style={{ flex: 2, height: 8, background: 'var(--warm2)', borderRadius: 4, overflow: 'hidden' }}>
+                    <div style={{ width: `${(breakdownGravidade[g] / ocNoPeriodo.length) * 100}%`, height: '100%', background: cor }} />
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--ink3)' }}>{c.obs?.length || 0} observações</div>
-                  <div className="progress-bar" style={{ marginTop: 6, marginBottom: 0 }}><div className="progress-fill" style={{ width: `${Math.min((c.obs?.length||0)*20, 100)}%` }} /></div>
+                  <div style={{ fontSize: 12, fontWeight: 600, minWidth: 26, textAlign: 'right' }}>{breakdownGravidade[g]}</div>
                 </div>
-              ))}
+              )
+            ))}
+          </div>
+          <div className="card" style={{ gridColumn: '1/-1' }}>
+            <div className="card-title">📊 Rotina — Semana atual (indicador)</div>
+            <div className="mini-chart">
+              {weekBars.map((v,i) => <div key={i} className="chart-bar" style={{ height: `${v/10*100}%`, background: i===4?'var(--sage)':'var(--sage-mid)' }} />)}
             </div>
-          )}
+            <div className="chart-labels">{['Seg','Ter','Qua','Qui','Sex'].map(d=><div key={d} className="chart-label">{d}</div>)}</div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {filtroTipo === 'crianca' && (
+        <div className="card">
+          <div className="card-title">🧒 Detalhamento por criança</div>
+          <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--warm3)' }}>
+                {['Criança','Presenças','Faltas','Ocorrências','Observações'].map(h => (
+                  <th key={h} style={{ textAlign: h === 'Criança' ? 'left' : 'center', padding: 8, fontSize: 11, color: 'var(--ink3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {faltasPorCrianca.map(x => (
+                <tr key={x.crianca.id} style={{ borderBottom: '1px solid var(--warm3)' }}>
+                  <td style={{ padding: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div className="avatar" style={{ width: 26, height: 26, fontSize: 10, background: x.crianca.cor?.[0] || '#e8f0eb', color: x.crianca.cor?.[1] || '#2d5240' }}>{x.crianca.nome.substring(0, 1)}</div>
+                      {x.crianca.nome}
+                    </div>
+                  </td>
+                  <td style={{ textAlign: 'center', padding: 8 }}><span className="tag tag-green">{x.presentes}</span></td>
+                  <td style={{ textAlign: 'center', padding: 8 }}>{x.faltas > 0 ? <span className="tag tag-terra">{x.faltas}</span> : '—'}</td>
+                  <td style={{ textAlign: 'center', padding: 8 }}>{x.ocorrencias > 0 ? <span className="tag tag-gold">{x.ocorrencias}</span> : '—'}</td>
+                  <td style={{ textAlign: 'center', padding: 8, color: 'var(--ink3)', fontSize: 12 }}>{x.crianca.obs?.length || 0}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {filtroTipo === 'educadora' && (
+        <div className="card">
+          <div className="card-title">👩‍🏫 Detalhamento por educadora</div>
+          <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--warm3)' }}>
+                {['Educadora','Tipo','Presenças','Faltas','Just.','Ocorrências'].map(h => (
+                  <th key={h} style={{ textAlign: h === 'Educadora' ? 'left' : 'center', padding: 8, fontSize: 11, color: 'var(--ink3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {faltasPorEdu.map(x => (
+                <tr key={x.edu.id} style={{ borderBottom: '1px solid var(--warm3)' }}>
+                  <td style={{ padding: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div className="avatar" style={{ width: 26, height: 26, fontSize: 10, background: x.edu.cor?.[0] || '#e8f0eb', color: x.edu.cor?.[1] || '#2d5240' }}>{x.edu.nome.substring(0, 2)}</div>
+                      {x.edu.nome}
+                    </div>
+                  </td>
+                  <td style={{ textAlign: 'center', padding: 8, fontSize: 11, color: 'var(--ink3)' }}>{x.edu.tipo}</td>
+                  <td style={{ textAlign: 'center', padding: 8 }}><span className="tag tag-green">{x.presentes}</span></td>
+                  <td style={{ textAlign: 'center', padding: 8 }}>{x.faltas > 0 ? <span className="tag tag-terra">{x.faltas}</span> : '—'}</td>
+                  <td style={{ textAlign: 'center', padding: 8 }}>{x.justificadas > 0 ? <span className="tag tag-gold">{x.justificadas}</span> : '—'}</td>
+                  <td style={{ textAlign: 'center', padding: 8 }}>{x.ocorrencias > 0 ? <span className="tag tag-gold">{x.ocorrencias}</span> : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }

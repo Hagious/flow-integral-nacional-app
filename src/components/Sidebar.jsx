@@ -19,6 +19,7 @@ const NAV = [
   { section: 'Equipe' },
   { id: 'educadoras', label: 'Educadoras', icon: '👩‍🏫' },
   { id: 'relatorios', label: 'Relatórios', icon: '📊' },
+  { id: 'notas', label: 'Notas & Avaliação', icon: '📊' },
 ]
 
 const DAYS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']

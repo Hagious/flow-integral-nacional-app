@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext.jsx'
 import { useAuth, registrarAuditoria } from '../context/AuthContext.jsx'
+import ShareExportModal from '../components/ShareExportModal.jsx'
 
 // ─── Constantes ───────────────────────────────────────────────
 
@@ -532,7 +533,8 @@ export default function Ocorrencias() {
   const [ocorrencias, setOcorrencias] = useState(() => lsGet('integral_ocorrencias', []))
   const [showForm, setShowForm] = useState(false)
   const [editando, setEditando] = useState(null)
-  const [filtros, setFiltros] = useState({ status: '', categoria: '', gravidade: '', busca: '', data: '' })
+  const [filtros, setFiltros] = useState({ status: '', categoria: '', gravidade: '', busca: '', data: '', data_ini: '', data_fim: '', crianca_id: '', educadora_id: '' })
+  const [shareOpen, setShareOpen] = useState(false)
 
   function saveOcorrencia(form) {
     const isEdit = !!editando
@@ -565,6 +567,10 @@ export default function Ocorrencias() {
     if (filtros.categoria && o.categoria !== filtros.categoria) return false
     if (filtros.gravidade && o.gravidade !== filtros.gravidade) return false
     if (filtros.data && o.data !== filtros.data) return false
+    if (filtros.data_ini && o.data < filtros.data_ini) return false
+    if (filtros.data_fim && o.data > filtros.data_fim) return false
+    if (filtros.crianca_id && !o.criancas_ids?.includes(filtros.crianca_id)) return false
+    if (filtros.educadora_id && !o.educadoras_ids?.includes(filtros.educadora_id)) return false
     if (filtros.busca) {
       const q = filtros.busca.toLowerCase()
       const cNomes = children.filter(c => o.criancas_ids?.includes(c.id)).map(c => c.nome.toLowerCase()).join(' ')
@@ -591,6 +597,7 @@ export default function Ocorrencias() {
           <div className="page-subtitle">Registro formal de incidentes, conflitos e situações relevantes</div>
         </div>
         <div className="header-actions">
+          <button className="btn btn-ghost" onClick={() => setShareOpen(true)}>📤 Compartilhar</button>
           <button className="btn btn-primary" onClick={() => { setShowForm(true); setEditando(null) }}>+ Registrar Ocorrência</button>
         </div>
       </div>
@@ -643,9 +650,52 @@ export default function Ocorrencias() {
           <option value="">Toda gravidade</option>
           {GRAVIDADE.map(g => <option key={g.id} value={g.id}>▲ {g.label}</option>)}
         </select>
-        <input type="date" className="form-input" style={{ flex: 1, minWidth: 140 }} value={filtros.data} onChange={e => setFiltros(p => ({ ...p, data: e.target.value }))} />
+        <input type="date" className="form-input" style={{ flex: 1, minWidth: 130 }} placeholder="Data" value={filtros.data} onChange={e => setFiltros(p => ({ ...p, data: e.target.value }))} />
+        <input type="date" className="form-input" style={{ flex: 1, minWidth: 130 }} title="De" value={filtros.data_ini} onChange={e => setFiltros(p => ({ ...p, data_ini: e.target.value }))} />
+        <input type="date" className="form-input" style={{ flex: 1, minWidth: 130 }} title="Até" value={filtros.data_fim} onChange={e => setFiltros(p => ({ ...p, data_fim: e.target.value }))} />
+        <select className="form-input" style={{ flex: 1, minWidth: 140 }} value={filtros.crianca_id} onChange={e => setFiltros(p => ({ ...p, crianca_id: e.target.value }))}>
+          <option value="">Todas as crianças</option>
+          {children.map(c => <option key={c.id} value={c.id}>🧒 {c.nome}</option>)}
+        </select>
+        <select className="form-input" style={{ flex: 1, minWidth: 140 }} value={filtros.educadora_id} onChange={e => setFiltros(p => ({ ...p, educadora_id: e.target.value }))}>
+          <option value="">Todas as educadoras</option>
+          {educadoras.map(ed => <option key={ed.id} value={ed.id}>👩‍🏫 {ed.nome}</option>)}
+        </select>
         <span style={{ fontSize: 12, color: 'var(--ink3)', whiteSpace: 'nowrap' }}>{filtradas.length} de {ocorrencias.length}</span>
       </div>
+
+      {shareOpen && (() => {
+        const subtitulo = [
+          filtros.data_ini && filtros.data_fim ? `${filtros.data_ini.split('-').reverse().join('/')} a ${filtros.data_fim.split('-').reverse().join('/')}` : '',
+          filtros.crianca_id && `Criança: ${children.find(c => c.id === filtros.crianca_id)?.nome}`,
+          filtros.educadora_id && `Educadora: ${educadoras.find(e => e.id === filtros.educadora_id)?.nome}`,
+          `${filtradas.length} ocorrência(s)`,
+        ].filter(Boolean).join(' · ')
+        const texto = filtradas.map(oc => {
+          const cNomes = children.filter(c => oc.criancas_ids?.includes(c.id)).map(c => c.nome).join(', ') || '—'
+          const eNomes = educadoras.filter(e => oc.educadoras_ids?.includes(e.id)).map(e => e.nome).join(', ') || '—'
+          return [
+            `• ${oc.titulo}`,
+            `  Data: ${oc.data?.split('-').reverse().join('/')} ${oc.hora || ''}`,
+            `  Categoria: ${CATEGORIAS.find(c => c.id === oc.categoria)?.label}`,
+            `  Gravidade: ${GRAVIDADE.find(g => g.id === oc.gravidade)?.label} · Status: ${STATUS.find(s => s.id === oc.status)?.label}`,
+            `  Crianças: ${cNomes}`,
+            `  Educadoras: ${eNomes}`,
+            `  Descrição: ${oc.descricao}`,
+            oc.resolucao && `  Resolução: ${oc.resolucao}`,
+          ].filter(Boolean).join('\n')
+        }).join('\n\n')
+        return (
+          <ShareExportModal
+            aberto={shareOpen}
+            onClose={() => setShareOpen(false)}
+            titulo="Relatório de Ocorrências"
+            subtitulo={subtitulo}
+            conteudoTexto={texto || 'Nenhuma ocorrência com os filtros atuais.'}
+            linkRelativo="Ocorrências"
+          />
+        )
+      })()}
 
       {/* Lista */}
       {filtradas.map(oc => (

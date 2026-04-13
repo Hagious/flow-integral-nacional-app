@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext.jsx'
 import { ATIVIDADES_EXEMPLO, CAMPOS_EXPERIENCIA, OBJETIVOS_APRENDIZAGEM } from '../data/bncc.js'
 import PrintPreview from '../components/PrintTemplate.jsx'
+import ShareExportModal from '../components/ShareExportModal.jsx'
 import { validarCelulaPlanejamento, PainelValidacao, completarCelulaComIA } from '../utils/validacao.jsx'
 
 const SLOTS_BASE = [
@@ -137,6 +138,7 @@ export default function PlanejamentoInteligente() {
     })
   )
   const [showPrint, setShowPrint] = useState(false)
+  const [showShare, setShowShare] = useState(false)
   const [showBanco, setShowBanco] = useState(false)
   const [slotParaAlocar, setSlotParaAlocar] = useState(null)
   const [loadingIA, setLoadingIA] = useState(false)
@@ -240,6 +242,7 @@ export default function PlanejamentoInteligente() {
         <div className="header-actions">
           <button className="btn btn-ghost btn-sm" onClick={() => setShowBanco(!showBanco)}>🗂️ Banco de Atividades</button>
           <button className="btn btn-ghost btn-sm" onClick={() => setShowPrint(true)}>👁️ Prévia / Imprimir</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowShare(true)}>📤 Compartilhar</button>
         </div>
       </div>
 
@@ -494,6 +497,44 @@ export default function PlanejamentoInteligente() {
           <button className="btn btn-primary btn-sm" onClick={() => toast('Salvo!')}>💾 Salvar</button>
         </div>
       )}
+
+      {/* Share */}
+      {showShare && (() => {
+        const slotP = slots.find(s => s.principal)
+        const linhasTexto = [
+          `Semana: ${meta.semana || '—'}`,
+          '',
+          ...(slotP ? DIAS.map((d, i) => `— ${d} —\n${(slotP.cells[i] || '(sem atividade)').trim()}`) : []),
+          '',
+          meta.propostas ? `PROPOSTAS:\n${meta.propostas}` : '',
+          meta.observacao ? `\nOBSERVAÇÕES:\n${meta.observacao}` : '',
+          meta.reflexao ? `\nREFLEXÃO:\n${meta.reflexao}` : '',
+        ].filter(Boolean)
+        const htmlPreview = (
+          <div>
+            <p><strong>Semana:</strong> {meta.semana || '—'}</p>
+            {slotP && (
+              <table><thead><tr>{DIAS.map(d => <th key={d}>{d}</th>)}</tr></thead><tbody><tr>
+                {slotP.cells.map((c, i) => <td key={i} style={{ verticalAlign: 'top', fontSize: 11 }}><pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>{c || '—'}</pre></td>)}
+              </tr></tbody></table>
+            )}
+            {meta.propostas && <><h3 style={{ fontSize: 13 }}>Propostas da semana</h3><p>{meta.propostas}</p></>}
+            {meta.observacao && <><h3 style={{ fontSize: 13 }}>Observações</h3><p>{meta.observacao}</p></>}
+            {meta.reflexao && <><h3 style={{ fontSize: 13 }}>Reflexão</h3><p>{meta.reflexao}</p></>}
+          </div>
+        )
+        return (
+          <ShareExportModal
+            aberto={showShare}
+            onClose={() => setShowShare(false)}
+            titulo="Planejamento Semanal"
+            subtitulo={`Semana de ${meta.semana || '—'}`}
+            conteudoTexto={linhasTexto.join('\n')}
+            conteudoPreview={htmlPreview}
+            linkRelativo="Planejamento > Semanal"
+          />
+        )
+      })()}
 
       {/* Modal: edição expandida de célula / equipe do dia */}
       {modalCelula && (() => {

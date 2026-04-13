@@ -15,6 +15,7 @@ import Ocorrencias from './pages/Ocorrencias.jsx'
 import Feedbacks from './pages/Feedbacks.jsx'
 import Chat from './pages/Chat.jsx'
 import Calendario from './pages/Calendario.jsx'
+import Notas from './pages/Notas.jsx'
 import { Inclusao, DiarioFotos, Educadoras, RegistroDiario, Relatorios } from './pages/OtherPages.jsx'
 import { Auditoria, ControlePonto } from './pages/AdminPages.jsx'
 
@@ -40,6 +41,7 @@ const NAV = [
   { id: 'educadoras', label: 'Educadoras', icon: '👩‍🏫' },
   { id: 'ponto', label: 'Controle de Ponto', icon: '⏱️' },
   { id: 'relatorios', label: 'Relatórios', icon: '📊' },
+  { id: 'notas', label: 'Notas & Avaliação', icon: '📊' },
   { id: 'feedbacks', label: 'Feedbacks', icon: '💬' },
   { id: 'chat', label: 'Chat interno', icon: '💭' },
   { section: 'Administração', adminOnly: true },
@@ -88,16 +90,29 @@ function Sidebar({ page, setPage }) {
           <div style={{ width: 7, height: 7, borderRadius: '50%', background: dbConnected ? '#6aaa7a' : '#888', boxShadow: dbConnected ? '0 0 5px #6aaa7a' : 'none' }} />
           <span style={{ fontSize: 10, color: dbConnected ? '#9fd4a3' : 'rgba(255,255,255,0.3)' }}>{dbConnected ? 'Supabase' : 'Modo local'}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', background: 'rgba(255,255,255,0.07)', borderRadius: 8, marginBottom: 6, cursor: 'pointer' }}>
-          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff', fontWeight: 600 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'rgba(255,255,255,0.07)', borderRadius: 8, marginBottom: 8 }}>
+          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#fff', fontWeight: 600, flexShrink: 0 }}>
             {user?.nome?.substring(0,1).toUpperCase()}
           </div>
           <div style={{ flex: 1, overflow: 'hidden' }}>
             <div style={{ fontSize: 12, color: '#fff', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.nome}</div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>{user?.grupo}</div>
           </div>
-          <button onClick={logout} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 14, padding: 2 }} title="Sair">⏏</button>
         </div>
+        <button
+          onClick={() => { if (confirm('Deseja realmente sair?')) logout() }}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            width: '100%', padding: '9px 12px', marginBottom: 8,
+            background: 'rgba(196,113,74,0.18)', border: '1px solid rgba(196,113,74,0.35)',
+            borderRadius: 8, color: '#f5c6a8', fontSize: 12, fontWeight: 600,
+            cursor: 'pointer',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(196,113,74,0.32)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(196,113,74,0.18)' }}
+        >
+          🚪 Sair da conta
+        </button>
         <div className="today-pill">
           <div className="tp-label">Hoje</div>
           <div className="tp-day">{DAYS[now.getDay()]}, {now.getDate()} {MONTHS[now.getMonth()]}</div>
@@ -125,6 +140,7 @@ function AppInner() {
     'feedbacks': <Feedbacks />,
     'chat': <Chat />,
     'calendario': <Calendario />,
+    'notas': <Notas />,
     'inclusao': <Inclusao />,
     'rotina': <Rotina />,
     'fotos': <DiarioFotos />,
