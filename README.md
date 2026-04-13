@@ -93,6 +93,21 @@ on conflict do nothing;
 
 ---
 
+## 🔄 Dois casos de operação
+O app funciona em dois modos claros:
+
+1. **Supabase configurado**
+   - Salva dados na nuvem e permite sincronização entre dispositivos.
+   - Utiliza Supabase para todas as operações de CRUD e upload de fotos.
+   - Se houver perda de conexão, o modo local pode continuar armazenando dados temporariamente.
+
+2. **Sem Supabase configurado**
+   - Entra em modo local usando `localStorage`.
+   - Os dados ficam apenas no navegador atual.
+   - Esse modo permite testar o app sem backend ou em ambientes off-line.
+
+---
+
 ## 🧩 Estrutura do projeto
 ```text
 src/
