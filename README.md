@@ -196,6 +196,7 @@ src/
   - arquitetura de pastas
 - O README deve ser a primeira referência para qualquer pessoa entender o projeto.
 - Atualize também `src/lib/siteInfo.js` com a nova data ao publicar mudanças na `main`.
+- O app exibe rodapé global com direitos autorais de HAGIOUS TECNOLOGIA E SERVICOS LTDA e data da última atualização.
 
 ---
 

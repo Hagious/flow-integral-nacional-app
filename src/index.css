@@ -42,7 +42,19 @@ html, body, #root {
 
 /* Layout */
 .app-layout { display: flex; min-height: 100vh; }
-.main-content { flex: 1; overflow-y: auto; min-height: 100vh; }
+.page-shell { display: flex; flex-direction: column; flex: 1; min-height: 100vh; }
+.main-content { flex: 1; overflow-y: auto; min-height: 0; }
+.app-footer {
+  padding: 14px 28px 18px;
+  background: #f6f2e8;
+  color: var(--ink3);
+  font-size: 11px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  border-top: 1px solid var(--warm3);
+}
 .page-wrap { padding: 32px; max-width: 1120px; }
 
 /* Scrollbar */

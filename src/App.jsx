@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AppProvider, useApp } from './context/AppContext.jsx'
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'
+import { COPYRIGHT, CNPJ, LAST_UPDATE } from './lib/siteInfo.js'
 import Login from './pages/Login.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import BancoAtividades from './pages/BancoAtividades.jsx'
@@ -11,6 +12,8 @@ import Rotina from './pages/Rotina.jsx'
 import JornalLiterario from './pages/JornalLiterario.jsx'
 import Usuarios from './pages/Usuarios.jsx'
 import Ocorrencias from './pages/Ocorrencias.jsx'
+import Feedbacks from './pages/Feedbacks.jsx'
+import Chat from './pages/Chat.jsx'
 import { Inclusao, DiarioFotos, Educadoras, RegistroDiario, Relatorios } from './pages/OtherPages.jsx'
 import { Auditoria, ControlePonto } from './pages/AdminPages.jsx'
 
@@ -35,6 +38,8 @@ const NAV = [
   { id: 'educadoras', label: 'Educadoras', icon: '👩‍🏫' },
   { id: 'ponto', label: 'Controle de Ponto', icon: '⏱️' },
   { id: 'relatorios', label: 'Relatórios', icon: '📊' },
+  { id: 'feedbacks', label: 'Feedbacks', icon: '💬' },
+  { id: 'chat', label: 'Chat interno', icon: '💭' },
   { section: 'Administração', adminOnly: true },
   { id: 'usuarios', label: 'Usuários e Acessos', icon: '🔐', adminOnly: true },
   { id: 'auditoria', label: 'Auditoria', icon: '🔍', adminOnly: true },
@@ -44,7 +49,7 @@ const DAYS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
 const MONTHS = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
 
 function Sidebar({ page, setPage }) {
-  const { rotinaCount, dbConnected } = useApp()
+  const { rotinaCount, rotinaTotal, dbConnected } = useApp()
   const { user, logout, isAdmin, podeVer } = useAuth()
   const now = new Date()
 
@@ -71,7 +76,7 @@ function Sidebar({ page, setPage }) {
               <span style={{ fontSize: 15 }}>{item.icon}</span>
               {item.label}
               {item.badge && <span className="nav-badge" style={badgeStyle}>{item.badge}</span>}
-              {item.id==='rotina' && rotinaCount>0 && <span className="nav-badge" style={{ background: 'var(--sage)' }}>{rotinaCount}/10</span>}
+              {item.id==='rotina' && rotinaCount>0 && <span className="nav-badge" style={{ background: 'var(--sage)' }}>{rotinaCount}/{rotinaTotal}</span>}
             </button>
           )
         })}
@@ -115,6 +120,8 @@ function AppInner() {
     'criancas': <Criancas />,
     'registros': <Registros />,
     'ocorrencias': <Ocorrencias />,
+    'feedbacks': <Feedbacks />,
+    'chat': <Chat />,
     'inclusao': <Inclusao />,
     'rotina': <Rotina />,
     'fotos': <DiarioFotos />,
@@ -129,7 +136,13 @@ function AppInner() {
   return (
     <div className="app-layout">
       <Sidebar page={page} setPage={setPage} />
-      <main className="main-content">{pages[page] || pages['dashboard']}</main>
+      <div className="page-shell">
+        <main className="main-content">{pages[page] || pages['dashboard']}</main>
+        <footer className="app-footer">
+          <div>{COPYRIGHT}</div>
+          <div>CNPJ {CNPJ} · Última atualização: {LAST_UPDATE}</div>
+        </footer>
+      </div>
       {toast && <div className="toast"><span>{toast.icon||'✅'}</span><span>{toast.msg}</span></div>}
     </div>
   )
