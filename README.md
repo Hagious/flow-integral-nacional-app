@@ -77,6 +77,23 @@ Os arquivos gerados ficam em `dist/`.
 
 ---
 
+## ☁️ Deploy no Netlify
+1. Crie um novo site no Netlify e conecte ao repositório GitHub `flow-integral-nacional-app`.
+2. Configure a branch como `main`.
+3. Defina as variáveis de ambiente:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_KEY`
+4. Deixe as configurações de build como:
+```toml
+command = "npm run build"
+publish = "dist"
+```
+5. O arquivo `netlify.toml` já está no repositório para manter a configuração do deploy.
+
+> Se você usar rotas do cliente, o redirect SPA já está configurado em `netlify.toml`.
+
+---
+
 ## 🔖 Convenção de commits
 A partir de agora, adote o padrão de commits abaixo para manter o histórico claro e consistente:
 
