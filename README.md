@@ -28,6 +28,13 @@ O app oferece funcionalidades para a rotina pedagógica diária, com foco em Edu
 
 ---
 
+## 🆕 Novas atualizações
+- Adicionada documentação profissional de workflow para commits, PRs e issues
+- Arquivos novos: `.gitmessage`, `CONTRIBUTING.md`, `.github/commit-convention.md`, `.github/pull_request_template.md`, `.github/issue_template.md`
+- Utilize esses padrões para manter consistência entre este e outros projetos
+
+---
+
 ## 🚀 Como executar localmente
 1. Instale dependências:
 ```bash
