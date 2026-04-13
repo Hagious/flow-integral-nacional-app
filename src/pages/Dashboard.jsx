@@ -1,5 +1,16 @@
+import { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 import AlertasDiarios from '../components/AlertasDiarios.jsx'
+
+const HUMORES = [
+  { id: 'otimo',   emoji: '😄', label: 'Ótima' },
+  { id: 'bem',     emoji: '🙂', label: 'Bem' },
+  { id: 'normal',  emoji: '😐', label: 'Normal' },
+  { id: 'cansada', emoji: '😕', label: 'Cansada' },
+  { id: 'triste',  emoji: '😢', label: 'Triste' },
+]
+const HUMOR_DEFAULT = 'normal'
 
 const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 const DAYS_PT = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado']
@@ -30,13 +41,36 @@ function getAge(nasc) {
 
 export default function Dashboard({ setPage }) {
   const { children, educadoras, rotinaCount, registros } = useApp()
+  const { user } = useAuth()
   const now = new Date()
   const h = now.getHours()
   const greeting = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'
   const dateStr = `${DAYS_PT[now.getDay()]}, ${now.getDate()} de ${MONTHS_PT[now.getMonth()]} de ${now.getFullYear()}`
+  const primeiroNome = (user?.nome || '').split(' ')[0]
 
   const quoteIdx = now.getDate() % QUOTES.length
   const ideaIdx = now.getMonth() % IDEAS.length
+
+  const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const humorStorageKey = user ? `integral_humor_${user.id}_${todayKey}` : null
+  const [humor, setHumor] = useState(() => {
+    if (!humorStorageKey) return HUMOR_DEFAULT
+    return localStorage.getItem(humorStorageKey) || null
+  })
+  const [showHumorModal, setShowHumorModal] = useState(false)
+
+  useEffect(() => {
+    if (humorStorageKey && humor === null) setShowHumorModal(true)
+  }, [humorStorageKey, humor])
+
+  function escolherHumor(id) {
+    const valor = id || HUMOR_DEFAULT
+    setHumor(valor)
+    if (humorStorageKey) localStorage.setItem(humorStorageKey, valor)
+    setShowHumorModal(false)
+  }
+
+  const humorAtual = HUMORES.find(h => h.id === (humor || HUMOR_DEFAULT)) || HUMORES[2]
 
   // Aniversariantes do mês
   const thisMonth = now.getMonth() + 1
@@ -57,11 +91,49 @@ export default function Dashboard({ setPage }) {
       {/* Welcome */}
       <div className="welcome-block">
         <div className="welcome-text">
-          <h2>{greeting}! 🌿</h2>
+          <h2>{greeting}{primeiroNome ? `, ${primeiroNome}` : ''}! 🌿</h2>
           <p>{dateStr}</p>
+          <div style={{ marginTop: 10, fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontSize: 14, color: 'var(--ink2)', lineHeight: 1.6, borderLeft: '3px solid var(--gold)', paddingLeft: 12, maxWidth: 620 }}>
+            "{QUOTES[quoteIdx].text}"
+            <div style={{ fontSize: 11, color: 'var(--ink3)', marginTop: 4, fontStyle: 'normal' }}>— {QUOTES[quoteIdx].author}</div>
+          </div>
         </div>
-        <div className="welcome-emoji">🌿</div>
+        <button
+          type="button"
+          onClick={() => setShowHumorModal(true)}
+          title={`Humor de hoje: ${humorAtual.label}`}
+          style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 56, lineHeight: 1, padding: 0 }}
+        >
+          {humorAtual.emoji}
+        </button>
       </div>
+
+      {showHumorModal && (
+        <div className="modal-overlay" onClick={() => escolherHumor(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-title">Como você está se sentindo hoje?</div>
+            <p style={{ fontSize: 13, color: 'var(--ink3)', marginTop: -10, marginBottom: 18 }}>
+              Não é obrigatório responder. Sua escolha fica registrada apenas para hoje.
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'space-between', flexWrap: 'wrap' }}>
+              {HUMORES.map(opt => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => escolherHumor(opt.id)}
+                  style={{ flex: '1 1 80px', background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 'var(--r)', padding: '14px 8px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}
+                >
+                  <span style={{ fontSize: 36, lineHeight: 1 }}>{opt.emoji}</span>
+                  <span style={{ fontSize: 12, color: 'var(--ink2)' }}>{opt.label}</span>
+                </button>
+              ))}
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="btn-ghost" onClick={() => escolherHumor(null)}>Pular</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AlertasDiarios setPage={setPage} />
 
@@ -86,15 +158,8 @@ export default function Dashboard({ setPage }) {
       </div>
 
       <div className="grid-2" style={{ marginBottom: 22 }}>
-        {/* Quote + Birthdays */}
+        {/* Birthdays */}
         <div>
-          <div style={{ background: 'var(--gold-light)', borderRadius: 'var(--r)', border: '1px solid rgba(184,146,58,0.18)', padding: '18px 20px', marginBottom: 14 }}>
-            <div style={{ fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontSize: 15, color: 'var(--ink2)', lineHeight: 1.65, borderLeft: '3px solid var(--gold)', paddingLeft: 14 }}>
-              "{QUOTES[quoteIdx].text}"
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--ink3)', marginTop: 8, textAlign: 'right' }}>— {QUOTES[quoteIdx].author}</div>
-          </div>
-
           <div style={{ background: 'var(--terra-light)', borderRadius: 'var(--r)', border: '1px solid rgba(196,113,74,0.15)', padding: '14px 16px' }}>
             <div style={{ fontSize: 12, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--terracotta)', marginBottom: 10 }}>
               🎂 Aniversariantes — {MONTHS_PT[now.getMonth()]}
