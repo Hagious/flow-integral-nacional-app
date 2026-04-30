@@ -434,7 +434,7 @@ export default function PlanejamentoInteligente() {
                               )}
                               <button
                                 onClick={() => setModalCelula({ si, di })}
-                                style={{ fontSize: 9, padding: '1px 7px', borderRadius: 8, border: 'none', background: '#fff', color: 'var(--ink2)', cursor: 'pointer', fontWeight: 600, flexShrink: 0, marginLeft: 'auto', border: '1px solid var(--warm3)' }}
+                                style={{ fontSize: 9, padding: '1px 7px', borderRadius: 8, background: '#fff', color: 'var(--ink2)', cursor: 'pointer', fontWeight: 600, flexShrink: 0, marginLeft: 'auto', border: '1px solid var(--warm3)' }}
                                 title="Expandir para edição completa"
                               >
                                 ✏️ Expandir
